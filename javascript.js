@@ -1,3 +1,5 @@
+// If an operator is called, add current number to cache
+// If cache size contains 2 values when an operator is called, perform operation, clear cache and assign result to first value
 
 
 // Containers //
@@ -85,7 +87,7 @@ const mainButtons = [
     }
 ];
 
-
+const secondaryButtons = [];
 
 
 
@@ -97,31 +99,47 @@ calculator.appendChild(mainButtonsContainer);
 
 
 
-// Tracking Bools
+
+// Tracking Values
 let bFirstNumber = true;
+let bOperatorActive = false;
+let bDecimal = false;
+let bScreenHasValue = false;
+let bCanEquate = false;
+
+let currentNumbers = [];
+let operation = {};
 
 // Functions
 
 function add(num1, num2) {
-    return num1 + num2;
+    operation.result = Math.round(num1 + num2);
+    operation.num1 = operation.result;
+    return operation.result;
 }
 
 function subtract (num1, num2) {
-    return num1 - num2;
+    operation.result = Math.round(num1 - num2);
+    operation.num1 = operation.result;
+    return operation.result
 }
 
 function multiply (num1, num2) {
-    return num1 * num2;
+    operation.result = Math.round(num1 * num2);
+    operation.num1 = operation.result;
+    return operation.result;
 }
 
 function divide (num1, num2) {
-    return num1 / num2;
+    operation.result = Math.round(num1 / num2);
+    operation.num1 = operation.result;
+    return operation.result;
 }
 
 
 
-function operate(operation, num1, num2) {
-    switch (operation) {
+function evaluate(operator, num1, num2) {
+    switch (operator) {
         case 'add':
             console.log(add(num1, num2));
             break;
@@ -140,9 +158,86 @@ function operate(operation, num1, num2) {
     }
 };
 
-function displayNumber(e) {
-    console.log(e.target.innerText);
-    screen.innerText += e.target.innerText;
+function displayOperator(operator) {
+    screen.innerText = operator;
+}
+
+function updateOperation(operator, currentNum) {
+    bOperatorActive = true;
+    if (!('operator') in operation) {
+        operation.operator = operator;
+    }
+    if (!('num1' in operation)) {
+        operation.num1 = currentNum;
+    } else {
+        operation.num2 = currentNum;
+    }
+
+    if (operation.num1 && operation.num2) {
+        bCanEquate = true;
+        evaluate(operation.operator, operation.num1, operation.num2);
+    }
+    bDecimal = false;
+    operation.operator = operator;
+}
+
+function updateDisplay(e) {
+
+    switch (e.target.classList[0]) {
+        case 'number':
+            if (bOperatorActive) {
+                bOperatorActive = false;
+                screen.innerText = e.target.innerText;
+                break;
+            } else {
+                screen.innerText += e.target.innerText;
+                break;
+            }
+
+        case 'add':
+            updateOperation('add', +screen.innerText);
+            if ('result' in operation){
+                screen.innerText = operation.num1;
+            } else {
+                displayOperator("+");
+            }
+            break;
+        
+        case 'subtract':
+            updateOperation('subtract', +screen.innerText);
+            displayOperator("-");
+
+            break;
+
+        case 'multiply':
+            updateOperation('multiply', +screen.innerText);
+            displayOperator("x");
+
+            break;
+
+        case 'divide':
+            updateOperation('divide', +screen.innerText);
+            displayOperator("÷");
+
+            break;
+
+        case 'equals':
+            updateOperation('equals', +screen.innerText);
+            if ('result' in operation){
+                screen.innerText = operation.num1;
+            }
+
+            break;
+        case 'dot':
+            if (!bDecimal) {
+                screen.innerText += e.target.innerText;
+                bDecimal = true;
+            }
+            break;
+
+        }
+    //console.log(screen.innerText.length)
+    //screen.innerText += e.target.innerText;
 }
 
 function makeRows(rows, cols) {
@@ -157,12 +252,47 @@ function makeRows(rows, cols) {
       cell.classList.add(mainButtons[c].type);
       cell.classList.add("button");
 
-      if (mainButtons[c].type == "number") {
-        cell.addEventListener('mousedown', displayNumber);
-    }
-      // Add event listeners for mouse over and mouse down to simulate "dragging"
-    //   cell.addEventListener('mouseover', drawColor);
-    //   cell.addEventListener('mousedown', drawColor);
+
+      switch (mainButtons[c].type) {
+        case 'number':
+            cell.addEventListener('mousedown', updateDisplay);
+            break;
+
+        case 'add':
+            cell.addEventListener('mousedown', updateDisplay);
+            break;
+        
+        case 'subtract':
+            cell.addEventListener('mousedown', updateDisplay);
+
+            break;
+
+        case 'multiply':
+            cell.addEventListener('mousedown', updateDisplay);
+
+            break;
+
+        case 'divide':
+            cell.addEventListener('mousedown', updateDisplay);
+
+            break;
+
+        case 'equals':
+            cell.addEventListener('mousedown', updateDisplay);
+
+            break;
+
+
+        case 'dot':
+            cell.addEventListener('mousedown', updateDisplay);
+
+            break;
+      }
+
+    //   if (mainButtons[c].type == "number") {
+    //     cell.addEventListener('mousedown', updateDisplay);
+    //     }
+    //   if (mainButtons[c].type == "")
 
       mainButtonsContainer.appendChild(cell);
   
