@@ -1,5 +1,33 @@
-// If an operator is called, add current number to cache
-// If cache size contains 2 values when an operator is called, perform operation, clear cache and assign result to first value
+// PROJECT PLAN
+
+// To make it easier to control behavior, I am using containers for everything:
+    // Calculator container to store everything
+    // Display container to store the two displays (main and history) - may revise to just the mainDisplay which history display is appended to - flex column layout
+    // Main buttons container to store the numbers/operators
+        // I'm using an array of buttons to assign during Grid creation in the correct order. See makeRows function for more info.
+
+    // Secondary buttons container to store the Clear & Delete buttons
+
+
+// For functions, I require the core calculator functionality as well as handlers to receive & pass user input
+
+    // Core Functionality:
+        // Add, Subtract, Multiply, Divide, Equals - they will only ever receive two numbers and round the result
+        // Evaluate - evaluates the result based on updateOperation
+        // Update Display - passes selections to updateOperation & maintains the numbers/operator displayed on screen
+            // Update History display - uses the values to keep track of and display current history
+
+        // Update Operation - receives selections (operator, number) and updates values accordingly. If all values are available, pass to evaluate
+    
+
+// For variables, I need to keep track of what buttons are pressed, what type of buttons, and if an operator should fire on two numbers\
+
+    // Variables:
+    // bOperatorActive (bool designated by preceding b) = tracks if an operator has been pressed to control behavior for future buttons
+    // bDecimal (bool) = tracks if a decimal has been pressed so no further decimals can be entered
+
+    // operation (object) = contains the num1, num2, and operation values that are passed into updateOperation (and eventually evaluate)
+    // history = contains the same as operation but only assigned at evaluation time rather than every time updateOperation is called - is modified less than operation so easier to work with/less timing dependent.
 
 
 // Containers //
@@ -7,8 +35,14 @@
 const calculator = document.querySelector('#calculator');
 
 // Screen
-const screen = document.createElement('div');
-screen.classList.add('screen');
+const displayContainer = document.createElement('div');
+displayContainer.classList.add('displayContainer');
+
+const mainDisplay = document.createElement('div');
+mainDisplay.classList.add('mainDisplay');
+
+const historyDisplay = document.createElement('div');
+historyDisplay.classList.add('historyDisplay');
 
 // Buttons Container Main
 const mainButtonsContainer = document.createElement('div');
@@ -93,7 +127,10 @@ const secondaryButtons = [];
 
 
 // Append containers to eachother
-calculator.appendChild(screen);
+displayContainer.appendChild(mainDisplay);
+displayContainer.appendChild(historyDisplay);
+
+calculator.appendChild(displayContainer);
 calculator.appendChild(mainButtonsContainer);
 
 
@@ -101,144 +138,229 @@ calculator.appendChild(mainButtonsContainer);
 
 
 // Tracking Values
-let bFirstNumber = true;
 let bOperatorActive = false;
 let bDecimal = false;
-let bScreenHasValue = false;
-let bCanEquate = false;
+let bNumPressed = false;
 
-let currentNumbers = [];
 let operation = {};
+let history = "";
 
 // Functions
 
 function add(num1, num2) {
     operation.result = Math.round(num1 + num2);
     operation.num1 = operation.result;
+
     return operation.result;
 }
 
 function subtract (num1, num2) {
     operation.result = Math.round(num1 - num2);
     operation.num1 = operation.result;
+
     return operation.result
 }
 
 function multiply (num1, num2) {
     operation.result = Math.round(num1 * num2);
     operation.num1 = operation.result;
+
     return operation.result;
 }
 
 function divide (num1, num2) {
     operation.result = Math.round(num1 / num2);
     operation.num1 = operation.result;
+
     return operation.result;
 }
 
 
 
 function evaluate(operator, num1, num2) {
+    let result;
     switch (operator) {
         case 'add':
-            console.log(add(num1, num2));
+            result = add(num1, num2);
+            history = num1 + ' + ' + num2 + ' = ' + result;
             break;
         
         case 'subtract':
-            console.log(subtract(num1, num2));
+            result = subtract(num1, num2);
+            history = num1 + ' - ' + num2 + ' = ' + result;
             break;
 
         case 'multiply':
-            console.log(multiply(num1, num2));
+            result = multiply(num1, num2);
+            history = num1 + ' x ' + num2 + ' = ' + result;
             break;
 
         case 'divide':
-            console.log(divide(num1, num2));
+            if (num1 == 0 && num2 == 0) {
+                operation.result = "Error";
+                break;
+            }
+            if (num1 == 0) {
+                operation.result = 0;
+                break;
+            }
+            if (num2 == 0) {
+                operation.result = "Infinity";
+                break;
+            }
+
+            result = divide(num1, num2);
+
+            history = num1 + ' / ' + num2 + ' = ' + result;
             break;
     }
 };
 
-function displayOperator(operator) {
-    screen.innerText = operator;
-}
-
-function updateOperation(operator, currentNum) {
-    bOperatorActive = true;
-    if (!('operator') in operation) {
+function updateOperation(operator, currentNum) { 
+    
+    if (bOperatorActive) {
         operation.operator = operator;
     }
-    if (!('num1' in operation)) {
+
+    if (!bOperatorActive) {
+        bOperatorActive = true; // Set the operator to true so updateDisplay executes correct behavior on next user input
+    }
+
+    if ((!('operator') in operation)) { // If the operator has not yet been added to operation, create k/v pair
+        operation.operator = operator;
+    }
+
+    if (!('num1' in operation)) { // Same as operator above ^ but with num1.
         operation.num1 = currentNum;
     } else {
-        operation.num2 = currentNum;
+        operation.num2 = currentNum; // If num1 has been assigned, the num that was passed in is assigned to num2.
     }
+    // if (operation.num1 && operation.num2) { 
+    if ((operation.hasOwnProperty("num1" && "num2"))) { // If both numbers are available, evaluate with the current operator & nums.
 
-    if (operation.num1 && operation.num2) {
-        bCanEquate = true;
+        if (operation.operator == 'multiply' && (!bNumPressed)) {
+            return;
+        } 
+        
         evaluate(operation.operator, operation.num1, operation.num2);
     }
-    bDecimal = false;
-    operation.operator = operator;
+    bDecimal = false; // Set decimal to false so the calc accepts decimal inputs again on the new number.
+    operation.operator = operator; // Assign the current operator  AFTER everything else, to make sure the previous operator fires before reassignment so concurrent operations are supported without pressing equals. 
+    // This is the most important step to capture calculator behavior.
+
 }
 
-function updateDisplay(e) {
 
+
+
+function updateDisplay(e) {
+    let operator;
     switch (e.target.classList[0]) {
+
         case 'number':
-            if (bOperatorActive) {
+            bNumPressed = true;
+            if (bOperatorActive) {   // Checks to see if an operator is active so we know to replace the screen text with the second number
                 bOperatorActive = false;
-                screen.innerText = e.target.innerText;
-                break;
+                if (bDecimal) {
+                    mainDisplay.innerText += e.target.innerText;
+                    break;
+                } else {
+                    mainDisplay.innerText = e.target.innerText; // Replace screen text with assignment operator
+                    break;
+                }
+            
             } else {
-                screen.innerText += e.target.innerText;
+                mainDisplay.innerText += e.target.innerText;
                 break;
             }
 
         case 'add':
-            updateOperation('add', +screen.innerText);
-            if ('result' in operation){
-                screen.innerText = operation.num1;
-            } else {
-                displayOperator("+");
-            }
+            operator = "+"
+            value = +mainDisplay.innerText;
+            clearMainDisplay();
+            updateOperation('add', value);
+            updateHistory(operator, operation.num1);
+            bNumPressed = false;
+
+
             break;
         
         case 'subtract':
-            updateOperation('subtract', +screen.innerText);
-            displayOperator("-");
-
+            operator = "-"
+            value = +mainDisplay.innerText;
+            clearMainDisplay();
+            updateOperation('subtract', value);
+            updateHistory(operator, operation.num1);
+            bNumPressed = false;
             break;
 
         case 'multiply':
-            updateOperation('multiply', +screen.innerText);
-            displayOperator("x");
-
+            operator = "x";
+            value = +mainDisplay.innerText;
+            clearMainDisplay();
+            updateOperation('multiply', value);
+            updateHistory(operator, operation.num1);
+            bNumPressed = false;
             break;
 
         case 'divide':
-            updateOperation('divide', +screen.innerText);
-            displayOperator("÷");
-
+            operator = "÷"
+            value = +mainDisplay.innerText;
+            clearMainDisplay();
+            updateOperation('divide', value);
+            updateHistory(operator, operation.num1);
+            bNumPressed = false;
             break;
 
         case 'equals':
-            updateOperation('equals', +screen.innerText);
+            operator = "="
+            value = +mainDisplay.innerText;
+            updateOperation('equals', value);
+            updateHistory(operator, operation.num1);
             if ('result' in operation){
-                screen.innerText = operation.num1;
+                bOperatorActive = false;
+                mainDisplay.innerText = operation.result;
             }
-
+            clearMainDisplay();
             break;
+
         case 'dot':
-            if (!bDecimal) {
-                screen.innerText += e.target.innerText;
+            if (!bDecimal || mainDisplay.innerText == '') {
+                mainDisplay.innerText += e.target.innerText;
                 bDecimal = true;
             }
             break;
 
         }
-    //console.log(screen.innerText.length)
-    //screen.innerText += e.target.innerText;
 }
+
+function updateHistory(operator, currentNum) {
+    if (operator == "=") {
+        historyDisplay.innerText = history;
+    } else {
+        historyDisplay.innerText = currentNum + ' ' + operator;
+    }
+
+}
+
+function clearMainDisplay() {
+    mainDisplay.innerText = "";
+}
+
+function updateValue() {
+    if (bOperatorActive) {
+
+    }
+}
+
+
+
+
+
+
+
+
+
 
 function makeRows(rows, cols) {
   // Set style attributes of grid rows and grid-cols, custom properties denoted by -- in CSS
@@ -288,12 +410,6 @@ function makeRows(rows, cols) {
 
             break;
       }
-
-    //   if (mainButtons[c].type == "number") {
-    //     cell.addEventListener('mousedown', updateDisplay);
-    //     }
-    //   if (mainButtons[c].type == "")
-
       mainButtonsContainer.appendChild(cell);
   
     };
