@@ -144,6 +144,7 @@ let bNumPressed = false;
 
 let operation = {};
 let history = "";
+let currentOp;
 
 // Functions
 
@@ -197,34 +198,46 @@ function evaluate(operator, num1, num2) {
 
         case 'divide':
             if (num1 == 0 && num2 == 0) {
+                console.log("wtf");
                 operation.result = "Error";
+                history = operation.result;
                 break;
             }
             if (num1 == 0) {
                 operation.result = 0;
+                history = 0;
                 break;
             }
             if (num2 == 0) {
                 operation.result = "Infinity";
+                history = operation.result;
                 break;
             }
 
             result = divide(num1, num2);
-
             history = num1 + ' / ' + num2 + ' = ' + result;
             break;
     }
 };
 
 function updateOperation(operator, currentNum) { 
-    
-    if (bOperatorActive) {
-        operation.operator = operator;
+    console.log(operator);
+    bOperatorActive = true;
+
+    if (isNaN(currentNum)) {
+        operation.operator = currentOp;
+        updateHistory(operator, operation.num1);
+        return;
     }
 
     if (!bOperatorActive) {
-        bOperatorActive = true; // Set the operator to true so updateDisplay executes correct behavior on next user input
+        operation.operator = operator;
+        bOperatorActive = true;
     }
+
+    // if (!bOperatorActive) {
+    //     bOperatorActive = true; // Set the operator to true so updateDisplay executes correct behavior on next user input
+    // }
 
     if ((!('operator') in operation)) { // If the operator has not yet been added to operation, create k/v pair
         operation.operator = operator;
@@ -235,17 +248,29 @@ function updateOperation(operator, currentNum) {
     } else {
         operation.num2 = currentNum; // If num1 has been assigned, the num that was passed in is assigned to num2.
     }
+    if (operator == 'equals' && !operation.hasOwnProperty("num2")) {
+        return;
+    }
     // if (operation.num1 && operation.num2) { 
     if ((operation.hasOwnProperty("num1" && "num2"))) { // If both numbers are available, evaluate with the current operator & nums.
 
         if (operation.operator == 'multiply' && (!bNumPressed)) {
+            operation.operator = currentOp;
+            bDecimal = false;
+            console.log("return");
             return;
         } 
-        
+        console.log(operation.operator, operation.num1, operation.num2);
         evaluate(operation.operator, operation.num1, operation.num2);
+
     }
-    bDecimal = false; // Set decimal to false so the calc accepts decimal inputs again on the new number.
-    operation.operator = operator; // Assign the current operator  AFTER everything else, to make sure the previous operator fires before reassignment so concurrent operations are supported without pressing equals. 
+    if (operator != 'equals' || operator == 'equals') {
+        bDecimal = false
+        operation.operator = currentOp;
+        return;
+    }
+    // Set decimal to false so the calc accepts decimal inputs again on the new number.
+ // Assign the current operator  AFTER everything else, to make sure the previous operator fires before reassignment so concurrent operations are supported without pressing equals. 
     // This is the most important step to capture calculator behavior.
 
 }
@@ -275,6 +300,7 @@ function updateDisplay(e) {
             }
 
         case 'add':
+            currentOp = "add"
             operator = "+"
             value = +mainDisplay.innerText;
             clearMainDisplay();
@@ -282,46 +308,54 @@ function updateDisplay(e) {
             updateHistory(operator, operation.num1);
             bNumPressed = false;
 
-
             break;
+
         
         case 'subtract':
+            currentOp = "subtract";
             operator = "-"
             value = +mainDisplay.innerText;
             clearMainDisplay();
             updateOperation('subtract', value);
             updateHistory(operator, operation.num1);
             bNumPressed = false;
+
             break;
 
         case 'multiply':
+            currentOp = "multiply";
             operator = "x";
             value = +mainDisplay.innerText;
             clearMainDisplay();
             updateOperation('multiply', value);
             updateHistory(operator, operation.num1);
             bNumPressed = false;
+
             break;
 
         case 'divide':
+            currentOp = "divide";
             operator = "÷"
             value = +mainDisplay.innerText;
             clearMainDisplay();
             updateOperation('divide', value);
             updateHistory(operator, operation.num1);
             bNumPressed = false;
+
             break;
 
         case 'equals':
+            console.log(bOperatorActive);
             operator = "="
             value = +mainDisplay.innerText;
-            updateOperation('equals', value);
-            updateHistory(operator, operation.num1);
-            if ('result' in operation){
-                bOperatorActive = false;
-                mainDisplay.innerText = operation.result;
+            if (isNaN(value)) {
+                break;
             }
+            updateOperation(currentOp, value);
+            updateHistory(operator, operation.num1);
             clearMainDisplay();
+            bNumPressed = false;
+
             break;
 
         case 'dot':
@@ -335,11 +369,18 @@ function updateDisplay(e) {
 }
 
 function updateHistory(operator, currentNum) {
-    if (operator == "=") {
-        historyDisplay.innerText = history;
-    } else {
-        historyDisplay.innerText = currentNum + ' ' + operator;
+    if (bNumPressed) {
+        if (operator == "=") {
+            historyDisplay.innerText = history;
+        } else {
+            historyDisplay.innerText = history;
+            mainDisplay.innerText = currentNum + ' ' + operator;
+        }
     }
+    else {
+        mainDisplay.innerText = currentNum + ' ' + operator;
+    }
+
 
 }
 
