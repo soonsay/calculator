@@ -25,9 +25,18 @@
     // Variables:
     // bOperatorActive (bool designated by preceding b) = tracks if an operator has been pressed to control behavior for future buttons
     // bDecimal (bool) = tracks if a decimal has been pressed so no further decimals can be entered
+    // bNumPressed = tracks if a number has been entered so we can't accidentally call an operator on nothing
 
     // operation (object) = contains the num1, num2, and operation values that are passed into updateOperation (and eventually evaluate)
     // history = contains the same as operation but only assigned at evaluation time rather than every time updateOperation is called - is modified less than operation so easier to work with/less timing dependent.
+    // currentOp = contains the current operator so things don't get overwritten/calculator doesn't lag behind an operation if equals is used instead of consecutive operations.
+
+
+// REVIEW
+// So far, I need to re factor *a LOT*. I feel like my code is O.K. in spots & solutions are ok but syntax, consistency, and proper planning can be improved
+// I've been able to reduce re-written code in some spots by adding logic to functions called in all cases (GOOD) but too much logic is still prevalent in the core functions
+// If I revisit this project, I want to condense my function calls significantly and reduce the amount of arguments required at each layer. 
+// I also want to condense my conditionals (especially in updateOperation!). There are lines of code effectively doing nothing.
 
 
 // Containers //
@@ -235,26 +244,15 @@ function updateOperation(operator, currentNum) {
         bOperatorActive = true;
     }
 
-    // if (!bOperatorActive) {
-    //     bOperatorActive = true; // Set the operator to true so updateDisplay executes correct behavior on next user input
-    // }
-
-    if ((!('operator') in operation)) { // If the operator has not yet been added to operation, create k/v pair
-        operation.operator = operator;
-    }
-
-    if (!('num1' in operation)) { // Same as operator above ^ but with num1.
+    if (!('num1' in operation)) { // If num1 doesnt exist, create and assign
         operation.num1 = currentNum;
     } else {
-        operation.num2 = currentNum; // If num1 has been assigned, the num that was passed in is assigned to num2.
+        operation.num2 = currentNum; // If num1 has been assigned, the num that was passed in is assigned to num2. Num1 effectively function as an accumulator in this setup.
     }
-    if (operator == 'equals' && !operation.hasOwnProperty("num2")) {
-        return;
-    }
-    // if (operation.num1 && operation.num2) { 
-    if ((operation.hasOwnProperty("num1" && "num2"))) { // If both numbers are available, evaluate with the current operator & nums.
 
-        if (operation.operator == 'multiply' && (!bNumPressed)) {
+    if ((operation.hasOwnProperty("num1" && "num2"))) { // If both numbers have been assigned, evaluate with the current operator & nums.
+
+        if (operation.operator == ('multiply' || 'divide') && (!bNumPressed)) {
             operation.operator = currentOp;
             bDecimal = false;
             console.log("return");
@@ -270,7 +268,7 @@ function updateOperation(operator, currentNum) {
         return;
     }
     // Set decimal to false so the calc accepts decimal inputs again on the new number.
- // Assign the current operator  AFTER everything else, to make sure the previous operator fires before reassignment so concurrent operations are supported without pressing equals. 
+    // Assign the current operator  AFTER everything else, to make sure the previous operator fires before reassignment so concurrent operations are supported without pressing equals. 
     // This is the most important step to capture calculator behavior.
 
 }
@@ -345,7 +343,6 @@ function updateDisplay(e) {
             break;
 
         case 'equals':
-            console.log(bOperatorActive);
             operator = "="
             value = +mainDisplay.innerText;
             if (isNaN(value)) {
