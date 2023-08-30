@@ -130,7 +130,16 @@ const mainButtons = [
     }
 ];
 
-const secondaryButtons = [];
+const secondaryButtons = [
+    {
+        "btn" : "clear",
+        "type": "clear"
+    },
+    {
+        "btn" : "<",
+        "type": "delete"
+    }
+];
 
 
 
@@ -140,6 +149,7 @@ displayContainer.appendChild(mainDisplay);
 displayContainer.appendChild(historyDisplay);
 
 calculator.appendChild(displayContainer);
+calculator.appendChild(secondaryButtonsContainer);
 calculator.appendChild(mainButtonsContainer);
 
 
@@ -275,7 +285,6 @@ function updateOperation(operator, currentNum) {
 
 
 
-
 function updateDisplay(e) {
     let operator;
     switch (e.target.classList[0]) {
@@ -385,12 +394,29 @@ function clearMainDisplay() {
     mainDisplay.innerText = "";
 }
 
+function clearHistoryDisplay() {
+    historyDisplay.innerText = "";
+}
+
 function updateValue() {
     if (bOperatorActive) {
 
     }
 }
 
+function fullClear() {
+    clearMainDisplay();
+    clearHistoryDisplay();
+    operation = {};
+    history = "";
+}
+
+function deleteChar() {
+    if (mainDisplay.innerText.length > 0 && !bOperatorActive) {
+        console.log("delete attempted");
+        mainDisplay.innerText = mainDisplay.innerText.slice(0, -1);
+    }
+}
 
 
 
@@ -451,6 +477,28 @@ function makeRows(rows, cols) {
       mainButtonsContainer.appendChild(cell);
   
     };
+
+    secondaryButtonsContainer.style.setProperty('--grid-rows', 1);
+    secondaryButtonsContainer.style.setProperty('--grid-cols', 2);
+
+    for (i = 0; i < secondaryButtons.length; i++) {
+        let cell = document.createElement("button");
+        cell.innerText = secondaryButtons[i].btn;
+        cell.classList.add(secondaryButtons[i].type);
+        cell.classList.add("button", "secondaryButton");
+
+        switch (secondaryButtons[i].type) {
+            case 'clear':
+                cell.addEventListener('mousedown', fullClear);
+                break;
+
+            case 'delete':
+                cell.addEventListener('mousedown', deleteChar);
+                break;
+        }
+        secondaryButtonsContainer.appendChild(cell);
+    }
+    
   };
 
   makeRows(4, 4);
