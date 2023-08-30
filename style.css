@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@300&family=Press+Start+2P&display=swap');
 
 
 body {
@@ -10,6 +10,10 @@ body {
     margin: 0;
     padding: 0;
     flex-direction: column;
+
+    text-size-adjust: auto;
+    -webkit-text-size-adjust: auto;
+
 }
 
 .main {
@@ -20,6 +24,23 @@ body {
     height: 100%;
     justify-content: center;
     align-items: center;
+}
+
+#header {
+    width: auto;
+    margin-top: 2%;
+    margin-bottom: auto;
+    font-family: "Handjet";
+    font-size: 5vw;
+    box-shadow: -0.3em 0.15em black;
+    border: solid 2px black;
+    border-radius: 2em;
+    padding: 2% 1%;
+}
+
+#logo {
+    width: 20em;
+    height: auto;
 }
 
 #calculator {
@@ -33,6 +54,9 @@ body {
     border: solid black;
     border-radius: 2em;
     box-shadow: -2em 1em black;
+
+    margin-top: 5%;
+    margin-bottom:auto;
 }
 
 .displayContainer {
@@ -62,7 +86,8 @@ body {
 
 .historyDisplay {
     width: 90%;
-    height: 40%;
+    height: auto;
+    word-break: break-word;
 
 }
 
@@ -83,8 +108,45 @@ body {
     width: 4vw;
     height: 5vh;
     padding: 0;
-    font-size: 2em;
+    font-family: "Handjet";
+    font-size: 3em;
     box-shadow: -0.15em 0.15em black;
 
 }
 
+#footer {
+    display: flex;
+    gap: 0.5em;
+    background-color: black;
+    color: white;
+    font-family: Handjet;
+    font-size: 2em;
+    text-align: center;    
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+#iconDiv a {
+    display: flex;
+}
+
+#credit {
+    position: absolute;
+    font-size: 0.7em;
+    right: 1em;
+}
+
+a:visited {
+    text-decoration: none;
+    color: yellow;
+}
+
+a {
+    text-decoration: none;
+}
+
+img {
+    width: 1em;
+    height: auto;
+  }
